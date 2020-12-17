@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useRef, useState} from 'react';
 import './App.css';
 
 import firebase from 'firebase/app';
 import 'firebase/firestore';
-import 'firebase.auth';
+import 'firebase/auth';
+import 'firebase/analytics';
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-
-const [user] = useAuthState(auth); 
 
 firebase.initializeApp({
   apiKey: "AIzaSyA-tcG_vmpuwDQ7AWBRtyPQ8zzoCWZMguo",
@@ -20,7 +19,14 @@ firebase.initializeApp({
   measurementId: "G-T21T8K43E2"
 })
 
+const auth = firebase.auth();
+const firestore = firebase.firestore();
+const analytics = firebase.analytics();
+
 function App() {
+
+  const [user] = useAuthState(auth); 
+
   return (
     <div className="App">
       <header className="App-header">
@@ -50,6 +56,8 @@ function SignOut() {
 }
 
 function ChatRoom() {
+
+  const dummy = useRef()
   const messagesRef = firestore.collection('messages');
   const query = messagesRef. orderBy('createdAt').limit(25);
 
@@ -57,7 +65,7 @@ function ChatRoom() {
 
   const[formValue, setFormValue] = useState('');
 
-  const sendMessage = async(e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
 
     const { uid, photoURL } = auth.currentUser;
@@ -67,15 +75,19 @@ function ChatRoom() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       uid,
       photoURL
-    });
-    
-    setFormValue('')
+    })
+
+    setFormValue('');
+    dummy.current.scrollIntoView({ behavior: 'smooth' });
   }
 
-  return (
-    <div>
+  return (<>
+    <main>
+
       {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
-    </div>
+
+      <span ref={dummy}></span>
+    </main>
 
     <form onSubmit={sendMessage}>
 
@@ -83,7 +95,7 @@ function ChatRoom() {
 
       <button type="submit">Submit</button>
     </form>
-  )
+  </>)
 }
 
 function ChatMessage(props) {
